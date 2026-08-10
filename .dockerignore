@@ -1,0 +1,10 @@
+.git
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+data/logs
+data/vector
+data/sql/*.sqlite3
+data/sql/*.sqlite3-shm
+data/sql/*.sqlite3-wal

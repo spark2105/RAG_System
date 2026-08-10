@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.streamlit/secrets.toml
+.env
+data/logs/
+data/sql/*.sqlite3-shm
+data/sql/*.sqlite3-wal
+data/vector/
+

@@ -1,0 +1,61 @@
+x-rag-image: &rag-image
+  image: rag_system:latest
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+services:
+  worker:
+    <<: *rag-image
+    command: ["uvicorn", "worker_service:app", "--host", "0.0.0.0", "--port", "9000"]
+    environment:
+      HF_HOME: /models/huggingface
+      SENTENCE_TRANSFORMERS_HOME: /models/sentence-transformers
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+    volumes:
+      - App_data:/app/data
+      - App_config:/app/config
+      - modell_cache:/models
+    expose:
+      - "9000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=5)\""]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    <<: *rag-image
+    command: ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0", "--server.port=9005", "--server.headless=true"]
+    environment:
+      WORKER_URL: http://worker:9000
+      AUTO_START_WORKER: "false"
+    volumes:
+      - App_data:/app/data
+      - App_config:/app/config
+    ports:
+      - "9005:9005"
+    depends_on:
+      worker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; [urllib.request.urlopen(url, timeout=5) for url in ('http://127.0.0.1:9005/_stcore/health', 'http://worker:9000/health')]\""]
+      interval: 15s
+      timeout: 10s
+      start_period: 60s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  App_data:
+  App_config:
+  modell_cache:
