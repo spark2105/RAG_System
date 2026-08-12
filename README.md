@@ -19,6 +19,8 @@ The app communicates with the worker through an internal HTTP API. Long-running 
 
 ## Start with Docker
 
+The default Compose stack is portable and does not require a GPU:
+
 ```powershell
 docker compose up -d --build
 ```
@@ -29,7 +31,22 @@ Existing SQLite databases are migrated on worker startup: legacy `cleanup_status
 
 Open [http://localhost:9005](http://localhost:9005).
 
-The worker is configured to reserve one NVIDIA GPU for embedding workloads. On Windows, Docker Desktop must use the WSL2 backend with working NVIDIA GPU support. CPU-only hosts can remove the worker GPU reservation and continue to run the application on the CPU.
+The same embedding model is used on every machine: `nvidia/Nemotron-3-Embed-1B-BF16`. The application does not switch to a smaller CPU fallback model.
+
+Embedding execution is controlled by `embedding_device` in `config/RAG_Pipeline_Config.json` or by the `EMBEDDING_DEVICE` environment variable:
+
+- `auto`: use CUDA/ROCm when PyTorch reports it as available, otherwise Apple MPS when available, otherwise CPU.
+- `cpu`: force CPU execution.
+- `cuda` or `cuda:<index>`: force a CUDA/ROCm device and fail clearly if it is unavailable.
+- `mps`: force Apple Metal/MPS for local macOS development and fail clearly if it is unavailable.
+
+For NVIDIA GPU hosts, start Docker with the GPU override:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
+The GPU override reserves one NVIDIA GPU for the worker and defaults `EMBEDDING_DEVICE` to `cuda`. On Windows, Docker Desktop must use the WSL2 backend with working NVIDIA GPU support.
 
 Useful commands:
 

@@ -1,5 +1,6 @@
 {
   "embedding_model": "nvidia/Nemotron-3-Embed-1B-BF16",
+  "embedding_device": "auto",
   "local_files_only": false,
   "vector_db_path": "data/vector/lancedb_rss",
   "table_name": "rss_articles",

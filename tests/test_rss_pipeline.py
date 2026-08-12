@@ -1,6 +1,8 @@
 import sqlite3
-import sqlite3
+import os
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -15,7 +17,10 @@ from rss_pipeline import (
     get_sql_stats,
     ingest_rss,
     init_database,
+    load_embedding_model,
+    load_pipeline_config,
     normalize_article_url,
+    resolve_embedding_device,
     run_automatic_retrieval,
     search_similar_articles,
 )
@@ -29,6 +34,41 @@ class RssPipelineTest(unittest.TestCase):
             ),
             "https://example.test/news?id=42",
         )
+
+    def test_pipeline_config_supports_embedding_device_override(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            config_path.write_text(
+                '{"embedding_model": "nvidia/Nemotron-3-Embed-1B-BF16", "embedding_device": "auto"}',
+                encoding="utf-8",
+            )
+            with patch.dict(os.environ, {"EMBEDDING_DEVICE": "cpu"}):
+                config = load_pipeline_config(config_path)
+        self.assertEqual(config["embedding_model"], "nvidia/Nemotron-3-Embed-1B-BF16")
+        self.assertEqual(config["embedding_device"], "cpu")
+
+    def test_load_embedding_model_uses_configured_device_without_changing_model(self):
+        calls = []
+
+        class FakeSentenceTransformer:
+            def __init__(self, model_name, **kwargs):
+                calls.append((model_name, kwargs))
+
+        fake_module = types.SimpleNamespace(SentenceTransformer=FakeSentenceTransformer)
+        with patch.dict(sys.modules, {"sentence_transformers": fake_module}):
+            load_embedding_model(
+                "nvidia/Nemotron-3-Embed-1B-BF16",
+                local_files_only=True,
+                device="cpu",
+            )
+
+        self.assertEqual(calls[0][0], "nvidia/Nemotron-3-Embed-1B-BF16")
+        self.assertTrue(calls[0][1]["local_files_only"])
+        self.assertEqual(calls[0][1]["device"], "cpu")
+
+    def test_resolve_embedding_device_rejects_unknown_values(self):
+        with self.assertRaises(ValueError):
+            resolve_embedding_device("fallback-small-cpu-model")
 
     def test_init_database_creates_article_schema(self):
         with tempfile.TemporaryDirectory() as temp_dir:

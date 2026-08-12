@@ -27,6 +27,7 @@ from rss_pipeline import (
     DEFAULT_BM25_CANDIDATE_LIMIT,
     DEFAULT_BM25_WEIGHT,
     DEFAULT_EMBEDDING_BATCH_SIZE,
+    DEFAULT_EMBEDDING_DEVICE,
     DEFAULT_RRF_K,
     DEFAULT_TABLE_NAME,
     DEFAULT_VECTOR_WEIGHT,
@@ -40,6 +41,7 @@ from rss_pipeline import (
     load_embedding_model,
     load_pipeline_config,
     retrieve_best_article,
+    resolve_embedding_device,
     run_automatic_retrieval,
     save_feed_urls,
     load_feed_urls,
@@ -104,6 +106,7 @@ class WorkerRuntime:
         self.queue: Queue[tuple[str, Callable[[dict[str, Any], Callable[[str], None]], dict[str, Any]]]] = Queue()
         self.embedding_model: Any | None = None
         self.embedding_model_name: str | None = None
+        self.embedding_device_name: str | None = None
         self.model_lock = threading.Lock()
         self._job_runtime_payloads: dict[str, dict[str, Any]] = {}
         self._job_runtime_payloads_lock = threading.Lock()
@@ -130,17 +133,30 @@ class WorkerRuntime:
     def stop(self) -> None:
         self._stop_event.set()
 
-    def get_embedding_model(self, model_name: str, *, local_files_only: bool = False) -> Any:
+    def get_embedding_model(
+        self,
+        model_name: str,
+        *,
+        local_files_only: bool = False,
+        device: str = DEFAULT_EMBEDDING_DEVICE,
+    ) -> Any:
         model_name = str(model_name).strip()
         if not model_name:
             raise RuntimeError("Embedding model is not configured.")
+        resolved_device = resolve_embedding_device(device)
         with self.model_lock:
-            if self.embedding_model is None or self.embedding_model_name != model_name:
+            if (
+                self.embedding_model is None
+                or self.embedding_model_name != model_name
+                or self.embedding_device_name != resolved_device
+            ):
                 self.embedding_model = load_embedding_model(
                     model_name,
                     local_files_only=local_files_only,
+                    device=resolved_device,
                 )
                 self.embedding_model_name = model_name
+                self.embedding_device_name = resolved_device
             return self.embedding_model
 
     def submit_job(
@@ -288,15 +304,18 @@ class WorkerRuntime:
     ) -> dict[str, Any]:
         config = load_pipeline_config()
         model_name = str(config.get("embedding_model", ""))
+        embedding_device = str(config.get("embedding_device", DEFAULT_EMBEDDING_DEVICE))
         model = self.get_embedding_model(
             model_name,
             local_files_only=bool(payload.get("local_files_only", config.get("local_files_only", False))),
+            device=embedding_device,
         )
         return embed_unembedded_articles(
             model_name=model_name,
             local_files_only=bool(
                 payload.get("local_files_only", config.get("local_files_only", False))
             ),
+            embedding_device=self.embedding_device_name or embedding_device,
             vector_db_path=Path(str(config.get("vector_db_path", VECTOR_DB_PATH))),
             table_name=str(config.get("table_name", DEFAULT_TABLE_NAME)),
             fts_language=str(config.get("fts_language", "German")),
@@ -408,10 +427,12 @@ def _run_automatic_llm_evaluation(
 
     config = dict(pipeline_config or load_pipeline_config())
     model_name = str(config.get("embedding_model", ""))
+    embedding_device = str(config.get("embedding_device", DEFAULT_EMBEDDING_DEVICE))
     if llm_mode in {"Rag1", "Rag2"} and embedding_model is None:
         embedding_model = runtime.get_embedding_model(
             model_name,
             local_files_only=bool(config.get("local_files_only", False)),
+            device=embedding_device,
         )
 
     input_rows = list(request.rows)
@@ -447,6 +468,7 @@ def _run_automatic_llm_evaluation(
                         vector_db_path=str(config.get("vector_db_path", VECTOR_DB_PATH)),
                         table_name=str(config.get("table_name", DEFAULT_TABLE_NAME)),
                         embedding_model=embedding_model,
+                        embedding_device=embedding_device,
                         vector_candidate_limit=int(
                             config.get("vector_candidate_limit", DEFAULT_VECTOR_CANDIDATE_LIMIT)
                         ),
@@ -557,10 +579,13 @@ def shutdown() -> None:
 def health() -> dict[str, Any]:
     if not runtime.ready:
         raise HTTPException(status_code=503, detail="The worker is not ready.")
+    config = load_pipeline_config()
     return {
         "status": "ok",
         "service": "worker",
         "embedding_model_ready": runtime.embedding_model is not None,
+        "configured_embedding_device": str(config.get("embedding_device", DEFAULT_EMBEDDING_DEVICE)),
+        "embedding_device": runtime.embedding_device_name,
     }
 
 
@@ -675,9 +700,11 @@ def articles(limit: int = 200) -> dict[str, Any]:
 @app.post("/retrieval/automatic")
 def automatic_retrieval(request: AutomaticRetrievalRequest) -> dict[str, Any]:
     config = load_pipeline_config()
+    embedding_device = str(config.get("embedding_device", DEFAULT_EMBEDDING_DEVICE))
     model = runtime.get_embedding_model(
         str(config.get("embedding_model", "")),
         local_files_only=bool(config.get("local_files_only", False)),
+        device=embedding_device,
     )
     return run_automatic_retrieval(
         request.rows,
@@ -693,6 +720,7 @@ def automatic_retrieval(request: AutomaticRetrievalRequest) -> dict[str, Any]:
         ),
         model_name=str(config.get("embedding_model", "")),
         local_files_only=True,
+        embedding_device=embedding_device,
         vector_db_path=str(config.get("vector_db_path", VECTOR_DB_PATH)),
         table_name=str(config.get("table_name", DEFAULT_TABLE_NAME)),
         embedding_model=model,

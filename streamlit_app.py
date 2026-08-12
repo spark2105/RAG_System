@@ -113,6 +113,7 @@ def _pipeline_config() -> dict:
     except Exception:
         return {
             "embedding_model": "nvidia/Nemotron-3-Embed-1B-BF16",
+            "embedding_device": "auto",
             "article_limit_per_feed": 5,
             "article_text_enabled": True,
             "request_timeout_seconds": 20,
@@ -285,9 +286,14 @@ def _render_embeddings() -> None:
     st.title("Embeddings")
     st.caption("Create embeddings manually after RSS ingestion and maintain the vector database.")
     config = _pipeline_config()
-    st.code(str(config.get("embedding_model", "")), language="text")
+    st.code(
+        f"model: {config.get('embedding_model', '')}\n"
+        f"configured device: {config.get('embedding_device', 'auto')}",
+        language="text",
+    )
 
     try:
+        health = _worker_health() or {}
         stats = _api_request("GET", "/stats")
         sql_stats = stats.get("sql", {})
         vector_stats = stats.get("vector", {})
@@ -297,7 +303,8 @@ def _render_embeddings() -> None:
         )
         st.caption(
             f"Vector rows: {vector_stats.get('rows', 0)} · Dimensions: {vector_stats.get('dimensions', 0)} · "
-            f"Full-text index: {'available' if vector_stats.get('fts_index_exists') else 'missing'}"
+            f"Full-text index: {'available' if vector_stats.get('fts_index_exists') else 'missing'} · "
+            f"Loaded device: {health.get('embedding_device') or 'not loaded'}"
         )
     except RuntimeError as exc:
         st.error(str(exc))

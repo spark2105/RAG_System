@@ -25,6 +25,7 @@ PIPELINE_CONFIG_PATH = CONFIG_DIR / "RAG_Pipeline_Config.json"
 RSS_CONFIG_PATH = CONFIG_DIR / "RSS_URL.txt"
 DEFAULT_TABLE_NAME = "rss_articles"
 DEFAULT_EMBEDDING_MODEL = "nvidia/Nemotron-3-Embed-1B-BF16"
+DEFAULT_EMBEDDING_DEVICE = "auto"
 DOCUMENT_PROMPT_PREFIX = "passage: "
 DEFAULT_FTS_COLUMN = "article_text"
 DEFAULT_FTS_INDEX_NAME = "article_text_fts"
@@ -65,6 +66,8 @@ def load_pipeline_config(path: str | Path = PIPELINE_CONFIG_PATH) -> dict[str, A
         raise ValueError(f"Configuration must be a JSON object: {path}")
     if os.getenv("EMBEDDING_MODEL"):
         value["embedding_model"] = os.environ["EMBEDDING_MODEL"]
+    if os.getenv("EMBEDDING_DEVICE"):
+        value["embedding_device"] = os.environ["EMBEDDING_DEVICE"]
     if os.getenv("VECTOR_DB_PATH"):
         value["vector_db_path"] = os.environ["VECTOR_DB_PATH"]
     return value
@@ -338,10 +341,67 @@ def ingest_rss(
     }
 
 
-def load_embedding_model(model_name: str, local_files_only: bool = False) -> Any:
+def resolve_embedding_device(requested_device: str | None = None) -> str:
+    requested = str(requested_device or DEFAULT_EMBEDDING_DEVICE).strip().lower()
+    if not requested:
+        requested = DEFAULT_EMBEDDING_DEVICE
+    if requested == "auto":
+        try:
+            import torch
+        except Exception:
+            return "cpu"
+        if torch.cuda.is_available():
+            return "cuda"
+        mps_backend = getattr(getattr(torch, "backends", None), "mps", None)
+        if mps_backend is not None and mps_backend.is_available():
+            return "mps"
+        return "cpu"
+    if requested == "cpu":
+        return "cpu"
+    if requested == "mps":
+        try:
+            import torch
+        except Exception as exc:
+            raise RuntimeError(
+                "Embedding device 'mps' was requested, but PyTorch is not available."
+            ) from exc
+        mps_backend = getattr(getattr(torch, "backends", None), "mps", None)
+        if mps_backend is None or not mps_backend.is_available():
+            raise RuntimeError(
+                "Embedding device 'mps' was requested, but Apple Metal/MPS is not available. "
+                "Set embedding_device to 'auto' or 'cpu'."
+            )
+        return "mps"
+    if requested == "cuda" or requested.startswith("cuda:"):
+        try:
+            import torch
+        except Exception as exc:
+            raise RuntimeError(
+                f"Embedding device '{requested}' was requested, but PyTorch is not available."
+            ) from exc
+        if not torch.cuda.is_available():
+            raise RuntimeError(
+                f"Embedding device '{requested}' was requested, but CUDA/ROCm is not available. "
+                "Set embedding_device to 'auto' or 'cpu'."
+            )
+        return requested
+    raise ValueError(
+        "Unsupported embedding_device. Use 'auto', 'cpu', 'cuda', 'cuda:<index>', or 'mps'."
+    )
+
+
+def load_embedding_model(
+    model_name: str,
+    local_files_only: bool = False,
+    device: str | None = None,
+) -> Any:
     from sentence_transformers import SentenceTransformer
 
-    return SentenceTransformer(model_name, local_files_only=local_files_only)
+    return SentenceTransformer(
+        model_name,
+        local_files_only=local_files_only,
+        device=resolve_embedding_device(device),
+    )
 
 
 def build_passage_text(title: str | None, description: str | None) -> str:
@@ -411,6 +471,7 @@ def embed_unembedded_articles(
     *,
     model_name: str = DEFAULT_EMBEDDING_MODEL,
     local_files_only: bool = False,
+    embedding_device: str = DEFAULT_EMBEDDING_DEVICE,
     database_path: str | Path = DATABASE_PATH,
     vector_db_path: str | Path = VECTOR_DB_PATH,
     table_name: str = DEFAULT_TABLE_NAME,
@@ -469,17 +530,27 @@ def embed_unembedded_articles(
     if not rows:
         if table is not None and not _has_full_text_index(table):
             ensure_full_text_index(table, language=fts_language)
+        resolved_device = str(getattr(embedding_model, "device", "") or "").strip()
+        if not resolved_device:
+            resolved_device = resolve_embedding_device(embedding_device)
         return {
             "selected_count": 0,
             "embedded_count": 0,
             "stored_count": 0,
             "errors": [],
+            "embedding_device": resolved_device,
             "fts_index_created": table is not None,
             "rebuilt": rebuilt,
         }
 
+    resolved_device = str(getattr(embedding_model, "device", "") or "").strip()
     if embedding_model is None:
-        embedding_model = load_embedding_model(model_name, local_files_only=local_files_only)
+        resolved_device = resolve_embedding_device(embedding_device)
+        embedding_model = load_embedding_model(
+            model_name,
+            local_files_only=local_files_only,
+            device=resolved_device,
+        )
 
     vectors = []
     errors: list[dict[str, str]] = []
@@ -560,6 +631,7 @@ def embed_unembedded_articles(
         "vector_db_path": str(vector_db_path),
         "table_name": table_name,
         "embedding_model": model_name,
+        "embedding_device": resolved_device or embedding_device,
         "fts_index_created": table is not None,
         "rebuilt": rebuilt,
     }
@@ -620,6 +692,7 @@ def search_similar_articles(
     vector_db_path: str | Path = VECTOR_DB_PATH,
     table_name: str = DEFAULT_TABLE_NAME,
     embedding_model: Any | None = None,
+    embedding_device: str = DEFAULT_EMBEDDING_DEVICE,
     vector_candidate_limit: int = DEFAULT_VECTOR_CANDIDATE_LIMIT,
     bm25_candidate_limit: int = DEFAULT_BM25_CANDIDATE_LIMIT,
     vector_weight: float = DEFAULT_VECTOR_WEIGHT,
@@ -657,7 +730,11 @@ def search_similar_articles(
         )
 
     if embedding_model is None:
-        embedding_model = load_embedding_model(model_name, local_files_only=local_files_only)
+        embedding_model = load_embedding_model(
+            model_name,
+            local_files_only=local_files_only,
+            device=embedding_device,
+        )
 
     query_vector = embed_query_text(embedding_model, query)
     vector_hits = (
@@ -799,6 +876,7 @@ def run_automatic_retrieval(
     bm25_candidate_limit: int = DEFAULT_BM25_CANDIDATE_LIMIT,
     model_name: str = DEFAULT_EMBEDDING_MODEL,
     local_files_only: bool = False,
+    embedding_device: str = DEFAULT_EMBEDDING_DEVICE,
     database_path: str | Path = DATABASE_PATH,
     vector_db_path: str | Path = VECTOR_DB_PATH,
     table_name: str = DEFAULT_TABLE_NAME,
@@ -830,7 +908,11 @@ def run_automatic_retrieval(
         }
 
     if embedding_model is None:
-        embedding_model = load_embedding_model(model_name, local_files_only=local_files_only)
+        embedding_model = load_embedding_model(
+            model_name,
+            local_files_only=local_files_only,
+            device=embedding_device,
+        )
 
     results: list[dict[str, Any]] = []
     for result_number, (source_row_number, row, query) in enumerate(prepared_rows, start=1):
@@ -844,6 +926,7 @@ def run_automatic_retrieval(
                 query,
                 model_name=model_name,
                 local_files_only=local_files_only,
+                embedding_device=embedding_device,
                 database_path=database_path,
                 vector_db_path=vector_db_path,
                 table_name=table_name,

@@ -12,19 +12,13 @@ services:
       HF_HOME: /models/huggingface
       SENTENCE_TRANSFORMERS_HOME: /models/sentence-transformers
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-}
     volumes:
       - App_data:/app/data
       - App_config:/app/config
       - modell_cache:/models
     expose:
       - "9000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=5)\""]
       interval: 15s
