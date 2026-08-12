@@ -1,0 +1,124 @@
+<mxfile host="app.diagrams.net" modified="2026-08-12T12:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="rag-system-architecture" name="System Architecture">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="runtime_group" value="Docker Compose Runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CBD5E1;dashed=1;dashPattern=8 6;fontColor=#334155;fontSize=13;fontStyle=1;align=left;verticalAlign=top;spacing=14;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="330" y="120" width="720" height="510" as="geometry"/>
+        </mxCell>
+        <mxCell id="user" value="Nutzer&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Browser&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;fontColor=#0F172A;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;spacing=12;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="230" width="180" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="app" value="app&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Streamlit UI&lt;br&gt;Port 9005&lt;br&gt;Ingestion, Embeddings, Retrieval, LLM, Jobs&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFEFF;strokeColor=#0891B2;fontColor=#0F172A;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;spacing=12;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="360" y="215" width="250" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="worker" value="worker&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;FastAPI / Uvicorn&lt;br&gt;Port 9000&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#2563EB;fontColor=#0F172A;fontSize=17;fontStyle=1;align=center;verticalAlign=top;spacing=14;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="720" y="165" width="285" height="405" as="geometry"/>
+        </mxCell>
+        <mxCell id="worker_runtime" value="WorkerRuntime&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Job Queue + Scheduler&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;spacing=8;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="262" width="215" height="58" as="geometry"/>
+        </mxCell>
+        <mxCell id="rss_pipeline" value="rss_pipeline.py&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;RSS, Embeddings, Hybrid Retrieval&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;spacing=8;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="340" width="215" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="llm_service" value="llm_service.py&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Prompting + Hate-Speech Score&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;spacing=8;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="422" width="215" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="job_store" value="job_store.py&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Job + Scheduler Persistence&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;spacing=8;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="504" width="215" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="rss_sources" value="RSS / Artikelquellen&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Feeds + HTML&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;spacing=12;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="165" width="220" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="hf_models" value="SentenceTransformer&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Embedding Model&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;spacing=12;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="328" width="220" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="gemini" value="Gemini API&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;google-genai SDK&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CBD5E1;fontColor=#0F172A;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;spacing=12;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="475" width="220" height="86" as="geometry"/>
+        </mxCell>
+        <mxCell id="volumes_group" value="Persistente Volumes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CBD5E1;dashed=1;dashPattern=8 6;fontColor=#334155;fontSize=13;fontStyle=1;align=left;verticalAlign=top;spacing=14;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="170" y="690" width="1050" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="app_config" value="App_config&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;RSS_URL.txt&lt;br&gt;RAG_Pipeline_Config.json&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#0F172A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=10;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="210" y="740" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="sqlite" value="SQLite&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Article, Job, SchedulerState&lt;br&gt;data/sql/articles.sqlite3&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#0F172A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=10;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="470" y="740" width="250" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="lancedb" value="LanceDB&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Vectors + FTS/BM25&lt;br&gt;data/vector/lancedb_rss&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#0F172A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=10;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="760" y="740" width="230" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="model_cache" value="modell_cache&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;HF + ST cache&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#0F172A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=10;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="740" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_app" value="Browser :9005" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0891B2;strokeWidth=2;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="user" target="app">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="305" y="261" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_app_worker" value="HTTP API&lt;br&gt;Jobs + Polling" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="app" target="worker">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="665" y="262" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_rss" value="fetch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="rss_pipeline" target="rss_sources">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1056" y="282" as="offset"/>
+            <Array as="points">
+              <mxPoint x="1080" y="355"/>
+              <mxPoint x="1080" y="208"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_hf" value="load / encode" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="rss_pipeline" target="hf_models">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1054" y="392" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_gemini" value="evaluate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="llm_service" target="gemini">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1038" y="489" as="offset"/>
+            <Array as="points">
+              <mxPoint x="1080" y="453"/>
+              <mxPoint x="1080" y="518"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_config" value="config" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="worker" target="app_config">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="552" y="642" as="offset"/>
+            <Array as="points">
+              <mxPoint x="805" y="660"/>
+              <mxPoint x="320" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_sqlite" value="articles + jobs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="worker" target="sqlite">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="715" y="662" as="offset"/>
+            <Array as="points">
+              <mxPoint x="850" y="680"/>
+              <mxPoint x="595" y="680"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_lancedb" value="vectors + BM25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="worker" target="lancedb">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="935" y="660" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_worker_cache" value="cache" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=12;fontColor=#475569;" edge="1" parent="1" source="hf_models" target="model_cache">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1337" y="626" as="offset"/>
+            <Array as="points">
+              <mxPoint x="1365" y="371"/>
+              <mxPoint x="1365" y="700"/>
+              <mxPoint x="1110" y="700"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
