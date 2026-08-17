@@ -171,27 +171,39 @@ def build_manual_hate_speech_prompt(values: Mapping[str, Any]) -> str:
 
     prompt = f"""Bewerte den Kommentar auf identitätsbezogene Hassrede oder diskriminierende Sprache.
 
-Hassrede umfasst Angriffe, Abwertung, Stereotype oder Diskriminierung aufgrund von z. B. Ethnizität, Nationalität, Herkunft, Religion, Hautfarbe, Geschlecht, sexueller Orientierung, Geschlechtsidentität oder Behinderung.
-
+Hassrede umfasst jede Form der Kommunikation, die eine Person oder eine Gruppe aufgrund dessen, wer sie sind – also aufgrund ihrer Religion, Ethnizität, Nationalität, Rasse, Hautfarbe, Abstammung, ihres Geschlechts oder eines anderen Identitätsfaktors –, angreift oder abwertende beziehungsweise diskriminierende Sprache verwendet.
 WICHTIG:
 
-* Nutze alle vorhandenen Kontextdaten gemeinsam mit dem Kommentar.
-* Die betroffene Gruppe muss NICHT im Kommentar genannt sein. Sie kann sich nur aus Video oder Artikel ergeben.
-* Eine stereotype Aussage über eine durch den Kontext erkennbare Identitätsgruppe zählt als identitätsbezogene Abwertung.
-* Erkenne auch indirekte Anspielungen, Klischees, Codes, Ironie, Umgangssprache und offensichtliche Tippfehler.
-* Erfinde keinen nicht vorhandenen Kontext.
-- Gib als Antwort nur den ermittelten Skalawert als Ganzzahl aus
+- Nutze alle vorhandenen Kontextdaten gemeinsam mit dem Kommentar.
+- Die betroffene Gruppe muss nicht im Kommentar genannt sein. Sie kann sich nur aus Video oder Artikel ergeben.
+- Eine stereotype Aussage über eine durch den Kontext erkennbare Identitätsgruppe zählt als identitätsbezogene Abwertung.
+- Erkenne auch indirekte Anspielungen, Klischees, Codes, Ironie, Umgangssprache und offensichtliche Tippfehler.
+- Erfinde keinen nicht vorhandenen Kontext.
 
 Skala:
-0 = kein identitätsbezogener Bezug
-1–2 = schwache/unsichere Anspielung
-3–4 = erkennbare, mehrdeutige Abwertung/Stereotypisierung
-5–6 = deutliche identitätsbezogene Abwertung/Stereotypisierung
-7–8 = starke Beleidigung, Entmenschlichung oder Diskriminierung
-9 = extreme Hassrede/Gewaltbefürwortung
-10 = expliziter Aufruf zu Gewalt, Vernichtung oder Verfolgung
-
-Antworte ausschließlich mit einer Ganzzahl von 0 bis 10.
+Bewertungsskala mit Referenzbeispielen:
+•	0 = kein identitätsbezogener Bezug
+o	Kontext: Zeitungsartikel über ein gescheitertes Infrastrukturprojekt der Regierung.
+o	Beispiel: „Politiker XY macht wirklich schlechte Arbeit und ist inkompetent.“
+•	1–2 = schwache/unsichere Anspielung
+o	Kontext: Video über einen Diebstahl im Supermarkt mit Tatverdächtigen mit Migrationshintergrund.
+o	Beispiel: „Wieder mal die üblichen Verdächtigen"
+•	3–4 = erkennbare, mehrdeutige Abwertung/Stereotypisierung
+o	Kontext: Social-Media-Beitrag über staatliche Sozialleistungen für Asylsuchende.
+o	Beispiel: „Diese Leute sind doch alle zu faul zum Arbeiten und Leben nur auf unsere Kosten.“
+•	5–6 = deutliche identitätsbezogene Abwertung/Stereotypisierung
+o	Kontext: Artikel über die Beförderung einer Managerin in den Vorstand.
+o	Beispiel: „Frauen gehören nicht in Führungspositionen, denen fehlt der Gehirnschmalz .“
+•	7–8 = starke Beleidigung, Entmenschlichung oder Diskriminierung
+o	Kontext: Nachrichtenbeitrag über die Ankunft neuer Geflüchteter an der Grenze.
+o	Beispiel: „Dieses Pack sind wie Ratten, die unsere Gesellschaft von innen auffrisst.“
+•	9 = extreme Hassrede/Gewaltbefürwortung
+o	Kontext: Videobericht über eine Demonstration der LGBTQ+-Community.
+o	Beispiel: „Weg mit diesen psychisch Kranken, die haben kein Recht auf Leben!“
+•	10 = expliziter Aufruf zu Gewalt, Vernichtung oder Verfolgung
+o	Kontext: Foto einer Synagoge in einem Bericht über jüdisches Leben.
+o	Beispiel: „Kauft Waffen, spürt diese Leute auf und löscht sie alle systematisch aus!“
+Antworte ausschließlich mit einer Ganzzahl von 0 bis 10 ohne zusätzliche Erklärungen.
 
 Kommentar: {comment}"""
 

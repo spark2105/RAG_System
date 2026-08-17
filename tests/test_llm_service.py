@@ -32,12 +32,17 @@ class LlmServiceTest(unittest.TestCase):
             }
         )
         self.assertIn("Kommentar: Das ist ein Kommentar.", prompt)
-        self.assertIn("Hassrede umfasst Angriffe, Abwertung, Stereotype", prompt)
-        self.assertIn("* Nutze alle vorhandenen Kontextdaten gemeinsam mit dem Kommentar.", prompt)
-        self.assertIn("* Erkenne auch indirekte Anspielungen", prompt)
+        self.assertIn("Hassrede umfasst jede Form der Kommunikation", prompt)
+        self.assertIn("- Nutze alle vorhandenen Kontextdaten gemeinsam mit dem Kommentar.", prompt)
+        self.assertIn("- Erkenne auch indirekte Anspielungen", prompt)
+        self.assertIn("Bewertungsskala mit Referenzbeispielen:", prompt)
         self.assertIn("1–2 = schwache/unsichere Anspielung", prompt)
+        self.assertIn("Beispiel: „Wieder mal die üblichen Verdächtigen", prompt)
         self.assertIn("10 = expliziter Aufruf zu Gewalt, Vernichtung oder Verfolgung", prompt)
-        self.assertIn("Antworte ausschließlich mit einer Ganzzahl von 0 bis 10.", prompt)
+        self.assertIn(
+            "Antworte ausschließlich mit einer Ganzzahl von 0 bis 10 ohne zusätzliche Erklärungen.",
+            prompt,
+        )
         self.assertNotIn("Video-Titel:", prompt)
         self.assertNotIn("Artikel-Text:", prompt)
 
